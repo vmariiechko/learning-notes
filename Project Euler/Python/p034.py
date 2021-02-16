@@ -1,5 +1,6 @@
 from math import factorial
 
+
 # Answer in one line (very slow)
 answer = sum(i for i in range(3,10000000) if i == sum([factorial(int(j)) for j in str(i)]))
 print(answer)
@@ -14,6 +15,7 @@ def factorial_sum(n):
 		n //= 10000
 
 	return result + factorial_sum_without_leading_zeros[n]
+
 
 factorial_sum_without_leading_zeros = [sum(factorial(int(digit)) for digit in str(i)) for i in range(10000)]
 factorial_sum_with_leading_zeros = [sum(factorial(int(digit)) for digit in str(i).zfill(4)) for i in range(10000)]

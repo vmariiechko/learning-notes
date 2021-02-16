@@ -23,7 +23,6 @@ for p in range(2, LIMIT+1):
 	if isprime[p]:
 		primes.append(p)
 
-
 for i in range(len(primes)):
 	primes_sum = primes[i]
 	terms_count = 1

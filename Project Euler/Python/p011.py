@@ -24,6 +24,7 @@ grid = [
 width = len(grid[0])
 height = len(grid)
 
+
 def gratest_product(height, width, dy, dx, n):
 	product = 1
 	result = 1
@@ -42,6 +43,7 @@ def gratest_product(height, width, dy, dx, n):
 			product = 1
 
 	return result
+
 
 up_down = gratest_product(height-3, width, 1, 0, 4)
 left_right = gratest_product(height, width-3, 0, 1, 4)

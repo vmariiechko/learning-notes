@@ -22,4 +22,3 @@ for i in range(len(l_num)):
 		product = 1
 
 print(result)
-

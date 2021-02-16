@@ -82,4 +82,3 @@ def parse_card(card):
 
 answer = sum(1 for handpair in hands if player1_win(handpair))
 print(answer)
-

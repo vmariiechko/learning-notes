@@ -7,8 +7,6 @@ numbers = {1:3, 2:3, 3:5, 4:4, 5:4, 6:3, 7:5, 8:5, 9:4, 10:3,
 for i in range(1,10):
 	numbers[i*100] = numbers[i] + 7
 
-
-
 # Count letters for numbers from 1 to 20
 digits = sum([numbers[i] for i in range(1,10)])
 first_19 = sum( list(numbers.values())[0:19] )

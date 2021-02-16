@@ -7,6 +7,7 @@ for i in range(1,101):
 
 print(b**2-a)
 
+
 # Second solution
 l = 100
 s = l*(l+1)/2

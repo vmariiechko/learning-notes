@@ -1,5 +1,4 @@
-def is_palindrome(num):
-	return num == num[::-1]
+from eulertools import is_palindrome
 
 
 def lychrel_num(num):

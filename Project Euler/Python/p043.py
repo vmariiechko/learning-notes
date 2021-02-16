@@ -22,6 +22,7 @@ print(answer)
 def is_substr_divisible(num):
 	return all( (num[i+1]*100 + num[i+2]*10 + num[i+3]) % d == 0 for (i,d) in enumerate(DIVISORS) )
 
+
 DIVISORS = [2, 3, 5, 7, 11, 13, 17]
 
 answer = sum(int("".join(map(str,num))) for num in list(permutations(range(10))) if is_substr_divisible(num))

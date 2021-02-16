@@ -1,19 +1,11 @@
-def Fibonacci(n):
-	a, b = 1, 2
+from eulertools import Fibonacci_recursion
 
-	if n in [1,2]:
-		return n
-
-	for i in range(n-2):
-		a, b = b, a+b
-
-	return b
 
 n = 1
 s = 0
 
 while True:
-	fib = Fibonacci(n)
+	fib = Fibonacci_recursion(n)
 
 	if fib >= 4000000:
 		break

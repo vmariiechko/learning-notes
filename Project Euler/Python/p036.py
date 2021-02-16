@@ -8,6 +8,7 @@ def is_double_palindrome(num):
 
 	return False
 
+
 answer = sum(i for i in range(1000000) if is_double_palindrome(i))
 
 print(answer)

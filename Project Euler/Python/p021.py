@@ -1,4 +1,3 @@
-
 divsum = [0] * 10000
 answer = 0
 

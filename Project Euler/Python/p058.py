@@ -1,15 +1,5 @@
-from math import sqrt
+from eulertools import is_prime
 
-def is_prime(num):
-
-	if num % 2 == 0:
-		return False
-
-	for n in range(3, int(sqrt(num)+1), 2):
-		if num % n == 0:
-			return False
-
-	return True
 
 n = 3
 primes_num = 0

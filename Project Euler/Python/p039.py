@@ -11,5 +11,6 @@ def count_solutions(p):
 
 	return result
 
+
 answer = max(range(1,1001), key=count_solutions)
 print(answer)

@@ -1,17 +1,6 @@
-from math import sqrt
 from itertools import permutations
 
-
-def is_prime(num):
-
-	if num % 2 == 0:
-		return False
-
-	for n in range(3, int(sqrt(num)+1), 2):
-		if num % n == 0:
-			return False
-
-	return True
+from eulertools import is_prime
 
 
 for i in range(3,11):

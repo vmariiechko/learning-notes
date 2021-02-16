@@ -1,23 +1,8 @@
-from math import sqrt
+from eulertools import is_prime
 
 
 # 2,3,5,7 - circular primes
 answer = 4
-
-
-def is_prime(num):
-
-	if num < 2:
-		return False
-
-	if num % 2 == 0 and num > 2:
-		return False
-
-	for n in range(3, int(sqrt(num)+1), 2):
-		if num % n == 0:
-			return False
-
-	return True
 
 
 def circular_prime(num):

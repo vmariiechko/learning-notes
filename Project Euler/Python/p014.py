@@ -22,8 +22,8 @@ for i in range(13,1000000,2):
 
 print(result,result_chain)
 
-# Faster solution
 
+# Faster solution
 def countChain(num):
 	if num in values:
 		return values[num]
@@ -34,6 +34,7 @@ def countChain(num):
 		values[num] = 2 + countChain(int( (3*num+1)/2 ))
 
 	return values[num]
+
 
 result = 1
 result_chain = 0

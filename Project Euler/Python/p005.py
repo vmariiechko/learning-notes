@@ -1,11 +1,13 @@
 from math import sqrt, floor, log
 
+
 # Brute force solution:
 def evenly_divisible(num):
 	for i in range(2,21):
 		if num % i > 0:
 			return False
 	return True
+
 
 answer = 0
 
@@ -16,6 +18,7 @@ for i in range(2520,999999999,10):
 		break
 
 print(answer)
+
 
 # Second solution:
 n = 20	# range of numbers from 2 to 20

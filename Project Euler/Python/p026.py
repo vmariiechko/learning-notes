@@ -20,6 +20,7 @@ def cycle_len(n):
 	else:
 		return len(result[seen[reminder]:])
 
+
 answer = max(range(1,1000), key=cycle_len)
 
 print(answer)
