@@ -32,6 +32,8 @@ def is_palindrome(num):
 
 
 def sieve_of_eratosthenes(n):
+	assert n > 0 
+
 	primes = []
 
 	prime = [True for i in range(n+1)]
@@ -76,3 +78,19 @@ def calc_list_totients(n):
 				result[j] -= result[j] // i
 
 	return result
+
+
+def sqrt(num):
+	assert num >= 0
+
+	i = 1
+	while i * i <= num:
+		i *= 2
+
+	y = 0
+	while i > 0:
+		if (y + i)**2 <= num:
+			y += i
+		i //= 2
+
+	return y
