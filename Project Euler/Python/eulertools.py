@@ -94,3 +94,14 @@ def sqrt(num):
 		i //= 2
 
 	return y
+
+
+def sign(x):
+	assert isinstance(x, int), f"{x} isn't integer"
+	
+	if x > 0:
+		return 1
+	elif x < 0:
+		return -1
+	elif x == 0:
+		return 0
