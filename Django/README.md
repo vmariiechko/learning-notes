@@ -1,3 +1,3 @@
 # Django Notes
 
-> This folder contains all my django projects notes
+> This folder contains all my Django projects notes
