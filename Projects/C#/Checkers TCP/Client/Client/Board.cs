@@ -15,6 +15,12 @@ namespace Client
         private const int mapSize = 8;
         private const int cellSize = 50;
 
+        private int currentPlayer;
+
+        Button prevButton;
+
+        bool isMoving;
+
         private Image whiteFigure;
         private Image blackFigure;
 
@@ -32,6 +38,9 @@ namespace Client
 
         public void Init()
         {
+            currentPlayer = 1;
+            isMoving = false;
+            prevButton = null;
             map = new int[mapSize, mapSize] {
                 { 0,1,0,1,0,1,0,1 },
                 { 1,0,1,0,1,0,1,0 },
@@ -58,25 +67,63 @@ namespace Client
                     Button button = new Button();
                     button.Location = new Point(j * cellSize, i * cellSize);
                     button.Size = new Size(cellSize, cellSize);
+                    button.Click += new EventHandler(OnFigurePress);
                     if (map[i, j] == 1) button.Image = whiteFigure;
                     else if (map[i, j] == 2) button.Image = blackFigure;
-                    if (i % 2 != 0)
-                    {
-                        if (j % 2 == 0)
-                        {
-                            button.BackColor = Color.Gray;
-                        }
-                    }
-                    if (i % 2 == 0)
-                    {
-                        if (j % 2 != 0)
-                        {
-                            button.BackColor = Color.Gray;
-                        }
-                    }
+                    button.BackColor = GetPrevButtonColor(button);
                     this.Controls.Add(button);
                 }
             }
+        }
+        public void SwitchPlayer()
+        {
+            currentPlayer = currentPlayer == 1 ? 2 : 1;
+        }
+
+        public Color GetPrevButtonColor(Button prevButton)
+        {
+            if ((prevButton.Location.Y) / cellSize % 2 != 0)
+            {
+                if ((prevButton.Location.X / cellSize) % 2 == 0)
+                {
+                    return Color.Gray;
+                }
+            }
+            if ((prevButton.Location.Y / cellSize) % 2 == 0)
+            {
+                if ((prevButton.Location.X / cellSize) % 2 != 0)
+                {
+                    return Color.Gray;
+                }
+            }
+            return Color.White;
+        }
+
+        public void OnFigurePress(object sender, EventArgs e)
+        {
+            if (prevButton != null) prevButton.BackColor = GetPrevButtonColor(prevButton);
+            Button pressedButton = sender as Button;
+
+            if (map[pressedButton.Location.Y / cellSize, pressedButton.Location.X / cellSize] != 0 && map[pressedButton.Location.Y / cellSize, pressedButton.Location.X / cellSize] == currentPlayer)
+            {
+                pressedButton.BackColor = Color.Red;
+                isMoving = true;
+            }
+            else
+            {
+                if (isMoving)
+                {
+                    int temp = map[pressedButton.Location.Y / cellSize, pressedButton.Location.X / cellSize];
+                    map[pressedButton.Location.Y / cellSize, pressedButton.Location.X / cellSize] = map[prevButton.Location.Y / cellSize, prevButton.Location.X / cellSize];
+                    map[prevButton.Location.Y / cellSize, prevButton.Location.X / cellSize] = temp;
+                    pressedButton.Image = prevButton.Image;
+                    prevButton.Image = null;
+                    isMoving = false;
+                    SwitchPlayer();
+                }
+            }
+
+            prevButton = pressedButton;
         }
     }
 }
