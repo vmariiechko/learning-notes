@@ -4,7 +4,9 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
+using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -12,6 +14,11 @@ namespace Client
 {
     public partial class Board : Form
     {
+
+        private UInt16 Port = 8881;
+        private bool IsConnected;
+        private TcpClient client;
+
         const int mapSize = 8;
         const int cellSize = 50;
 
@@ -47,6 +54,7 @@ namespace Client
             currentPlayer = 1;
             isMoving = false;
             prevButton = null;
+            txtPort.Text = Port.ToString();
             map = new int[mapSize, mapSize] {
                 { 0,1,0,1,0,1,0,1 },
                 { 1,0,1,0,1,0,1,0 },
@@ -83,7 +91,7 @@ namespace Client
 
         public void CreateMap()
         {
-            this.Width = (mapSize + 1) * cellSize;
+            this.Width = (mapSize + 1) * cellSize + txtHost.Width;
             this.Height = (mapSize + 1) * cellSize;
 
             for (int i = 0; i < mapSize; i++)
@@ -105,6 +113,10 @@ namespace Client
                     this.Controls.Add(button);
                 }
             }
+
+            txtHost.Location = new Point(15 + mapSize * cellSize, mapSize);
+            txtPort.Location = new Point(15 + mapSize * cellSize, mapSize + cellSize);
+            btnConnect.Location = new Point(15 + mapSize * cellSize, mapSize + 2 * cellSize);
         }
         public void SwitchPlayer()
         {
@@ -190,6 +202,7 @@ namespace Client
                         CloseSteps();
                         SwitchPlayer();
                         ShowPossibleSteps();
+                        SendMove();
                         isContinue = false;
                     }
                     else if (isContinue)
@@ -581,5 +594,62 @@ namespace Client
             }
         }
 
+        private void UpdateBoard(int[,] tmp)
+        {
+            map = tmp;
+            CreateMap();
+        }
+
+        private void TxtPort_TextChanged(object sender, EventArgs e)
+        {
+            btnConnect.Enabled = UInt16.TryParse(txtPort.Text, out Port);
+        }
+
+        private void ClientThread()
+        {
+            client = new TcpClient(txtHost.Text.Trim(), Port);
+            Socket socket = client.Client;
+            IsConnected = true;
+            while (IsConnected)
+            {
+                if (socket.Poll(50000, SelectMode.SelectRead))
+                {
+                    int size = socket.Available;
+                    if (size <= 0) break;
+                    byte[] buffor = new byte[size];
+                    socket.Receive(buffor);
+                    int[,] tmp = new int[mapSize, mapSize];
+                    for (int i = 0; i < mapSize; ++i)
+                    {
+                        for (int j = 0; j < mapSize; ++j) tmp[i, j] = buffor[i + j];
+                    }
+                    UpdateBoard(tmp);
+                }
+            }
+            socket.Disconnect(true);
+        }
+
+        public void SendMove()
+        {
+            byte[] buffor = new byte[map.Length * map.Length * sizeof(int)];
+            for (int i = 0; i < mapSize; ++i)
+            {
+                for (int j = 0; j < mapSize; ++j) buffor[i + j] = (byte)map[i, j];
+            }
+
+            client.Client.Send(buffor);
+        }
+
+        private void BtnConnect_Click(object sender, EventArgs e)
+        {
+            if (IsConnected)
+            {
+                IsConnected = false;
+            }
+            else
+            {
+                new Thread(ClientThread).Start();
+            }
+        }
     }
 }
