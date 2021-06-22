@@ -15,7 +15,9 @@ namespace Client
     public partial class Board : Form
     {
 
-        private UInt16 Port = 8881;
+        private delegate void CreateMapProc();
+        private delegate void UpdateMapProc(int[] tmp);
+        private UInt16 Port = 4201;
         private bool IsConnected;
         private TcpClient client;
 
@@ -91,33 +93,60 @@ namespace Client
 
         public void CreateMap()
         {
-            this.Width = (mapSize + 1) * cellSize + txtHost.Width;
-            this.Height = (mapSize + 1) * cellSize;
 
-            for (int i = 0; i < mapSize; i++)
+            if (InvokeRequired) Invoke(new CreateMapProc(CreateMap));
+            else
             {
-                for (int j = 0; j < mapSize; j++)
+                //this.Controls.Clear();
+                //this.InitializeComponent();
+                //txtPort.Text = Port.ToString();
+                this.Width = (mapSize + 1) * cellSize + txtHost.Width;
+                this.Height = (mapSize + 1) * cellSize;
+                //buttons = new Button[mapSize, mapSize];
+
+                for (int r = 0; r < mapSize; r++)
                 {
-                    Button button = new Button();
-                    button.Location = new Point(j * cellSize, i * cellSize);
-                    button.Size = new Size(cellSize, cellSize);
-                    button.Click += new EventHandler(OnFigurePress);
-                    if (map[i, j] == 1)
-                        button.Image = whiteFigure;
-                    else if (map[i, j] == 2) button.Image = blackFigure;
-                    button.BackColor = GetPrevButtonColor(button);
-                    button.ForeColor = Color.Red;
+                    for (int c = 0; c < mapSize; c++)
+                    {
+                        Button button = new Button();
+                        button.Location = new Point(c * cellSize, r * cellSize);
+                        button.Size = new Size(cellSize, cellSize);
+                        button.Click += new EventHandler(OnFigurePress);
+                        if (map[r, c] == 1) button.Image = whiteFigure;
+                        else if (map[r, c] == 2) button.Image = blackFigure;
 
-                    buttons[i, j] = button;
 
-                    this.Controls.Add(button);
+                        button.BackColor = GetPrevButtonColor(button);
+                        button.ForeColor = Color.Red;
+
+                        buttons[r, c] = button;
+
+                        this.Controls.Add(button);
+                    }
                 }
+                txtHost.Location = new Point(15 + mapSize * cellSize, mapSize);
+                txtPort.Location = new Point(15 + mapSize * cellSize, mapSize + cellSize);
+                btnConnect.Location = new Point(15 + mapSize * cellSize, mapSize + 2 * cellSize);
             }
-
-            txtHost.Location = new Point(15 + mapSize * cellSize, mapSize);
-            txtPort.Location = new Point(15 + mapSize * cellSize, mapSize + cellSize);
-            btnConnect.Location = new Point(15 + mapSize * cellSize, mapSize + 2 * cellSize);
         }
+
+        public void UpdateMap(int[] tmp)
+        {
+            if (InvokeRequired) Invoke(new UpdateMapProc(UpdateMap), tmp);
+            else
+            {
+                prevButton = buttons[tmp[0], tmp[1]];
+                pressedButton = buttons[tmp[2], tmp[3]];
+                int temp = map[tmp[2], tmp[3]];
+                map[tmp[2], tmp[3]] = map[tmp[0], tmp[1]];
+                map[tmp[0], tmp[1]] = temp;
+                pressedButton.Image = prevButton.Image;
+                prevButton.Image = null;
+                pressedButton.Text = prevButton.Text;
+                prevButton.Text = "";
+            }
+        }
+
         public void SwitchPlayer()
         {
             currentPlayer = currentPlayer == 1 ? 2 : 1;
@@ -189,6 +218,7 @@ namespace Client
                     prevButton.Image = null;
                     pressedButton.Text = prevButton.Text;
                     prevButton.Text = "";
+                    SendMove();     // Send after every move
                     SwitchButtonToCheat(pressedButton);
                     countEatSteps = 0;
                     isMoving = false;
@@ -202,7 +232,6 @@ namespace Client
                         CloseSteps();
                         SwitchPlayer();
                         ShowPossibleSteps();
-                        SendMove();
                         isContinue = false;
                     }
                     else if (isContinue)
@@ -594,12 +623,6 @@ namespace Client
             }
         }
 
-        private void UpdateBoard(int[,] tmp)
-        {
-            map = tmp;
-            CreateMap();
-        }
-
         private void TxtPort_TextChanged(object sender, EventArgs e)
         {
             btnConnect.Enabled = UInt16.TryParse(txtPort.Text, out Port);
@@ -607,7 +630,15 @@ namespace Client
 
         private void ClientThread()
         {
-            client = new TcpClient(txtHost.Text.Trim(), Port);
+            try
+            {
+                client = new TcpClient(txtHost.Text.Trim(), Port);
+            }
+            catch (SocketException)
+            {
+                //LogAdd("Server if offline");
+                return;
+            }
             Socket socket = client.Client;
             IsConnected = true;
             while (IsConnected)
@@ -618,12 +649,13 @@ namespace Client
                     if (size <= 0) break;
                     byte[] buffor = new byte[size];
                     socket.Receive(buffor);
-                    int[,] tmp = new int[mapSize, mapSize];
-                    for (int i = 0; i < mapSize; ++i)
-                    {
-                        for (int j = 0; j < mapSize; ++j) tmp[i, j] = buffor[i + j];
-                    }
-                    UpdateBoard(tmp);
+                    int[] tmp = new int[4];
+                    tmp[0] = (int)buffor[0];
+                    tmp[1] = (int)buffor[1];
+                    tmp[2] = (int)buffor[2];
+                    tmp[3] = (int)buffor[3];
+                    UpdateMap(tmp);
+
                 }
             }
             socket.Disconnect(true);
@@ -631,12 +663,15 @@ namespace Client
 
         public void SendMove()
         {
-            byte[] buffor = new byte[map.Length * map.Length * sizeof(int)];
-            for (int i = 0; i < mapSize; ++i)
-            {
-                for (int j = 0; j < mapSize; ++j) buffor[i + j] = (byte)map[i, j];
-            }
 
+            // send prevButton and pressedButton positions
+            // send opponent buttons if deleted
+
+            byte[] buffor = new byte[4 * sizeof(int)];
+            buffor[0] = (byte)(prevButton.Location.Y / cellSize);
+            buffor[1] = (byte)(prevButton.Location.X / cellSize);
+            buffor[2] = (byte)(pressedButton.Location.Y / cellSize);
+            buffor[3] = (byte)(pressedButton.Location.X / cellSize);
             client.Client.Send(buffor);
         }
 
