@@ -15,8 +15,7 @@ namespace Client
     public partial class Board : Form
     {
 
-        private delegate void CreateMapProc();
-        private delegate void UpdateMapProc(int[] tmp);
+        private delegate void UpdateMapProc(byte[] tmp);
         private UInt16 Port = 4201;
         private bool IsConnected;
         private TcpClient client;
@@ -94,52 +93,47 @@ namespace Client
         public void CreateMap()
         {
 
-            if (InvokeRequired) Invoke(new CreateMapProc(CreateMap));
-            else
+            this.Width = (mapSize + 1) * cellSize + txtHost.Width;
+            this.Height = (mapSize + 1) * cellSize;
+
+            for (int r = 0; r < mapSize; r++)
             {
-                //this.Controls.Clear();
-                //this.InitializeComponent();
-                //txtPort.Text = Port.ToString();
-                this.Width = (mapSize + 1) * cellSize + txtHost.Width;
-                this.Height = (mapSize + 1) * cellSize;
-                //buttons = new Button[mapSize, mapSize];
-
-                for (int r = 0; r < mapSize; r++)
+                for (int c = 0; c < mapSize; c++)
                 {
-                    for (int c = 0; c < mapSize; c++)
-                    {
-                        Button button = new Button();
-                        button.Location = new Point(c * cellSize, r * cellSize);
-                        button.Size = new Size(cellSize, cellSize);
-                        button.Click += new EventHandler(OnFigurePress);
-                        if (map[r, c] == 1) button.Image = whiteFigure;
-                        else if (map[r, c] == 2) button.Image = blackFigure;
 
+                    Button button = new Button();
+                    button.Location = new Point(c * cellSize, r * cellSize);
+                    button.Size = new Size(cellSize, cellSize);
+                    button.Click += new EventHandler(OnFigurePress);
+                    if (map[r, c] == 1) button.Image = whiteFigure;
+                    else if (map[r, c] == 2) button.Image = blackFigure;
 
-                        button.BackColor = GetPrevButtonColor(button);
-                        button.ForeColor = Color.Red;
+                    button.BackColor = GetPrevButtonColor(button);
+                    button.ForeColor = Color.Red;
 
-                        buttons[r, c] = button;
+                    buttons[r, c] = button;
 
-                        this.Controls.Add(button);
-                    }
+                    this.Controls.Add(button);
                 }
-                txtHost.Location = new Point(15 + mapSize * cellSize, mapSize);
-                txtPort.Location = new Point(15 + mapSize * cellSize, mapSize + cellSize);
-                btnConnect.Location = new Point(15 + mapSize * cellSize, mapSize + 2 * cellSize);
             }
+
+            txtHost.Location = new Point(15 + mapSize * cellSize, mapSize);
+            txtPort.Location = new Point(15 + mapSize * cellSize, mapSize + cellSize);
+            btnConnect.Location = new Point(15 + mapSize * cellSize, mapSize + 2 * cellSize);
+
         }
 
-        public void UpdateMap(int[] tmp)
+
+        public void UpdateMap(byte[] btnsPos)
         {
-            if (InvokeRequired) Invoke(new UpdateMapProc(UpdateMap), tmp);
+            if (InvokeRequired) Invoke(new UpdateMapProc(UpdateMap), btnsPos);
             else
             {
-                prevButton = buttons[tmp[0], tmp[1]];
-                pressedButton = buttons[tmp[2], tmp[3]];
-                int temp = map[tmp[2], tmp[3]];
-                map[tmp[2], tmp[3]] = map[tmp[0], tmp[1]];
-                map[tmp[0], tmp[1]] = temp;
+                prevButton = buttons[btnsPos[0], btnsPos[1]];
+                pressedButton = buttons[btnsPos[2], btnsPos[3]];
+                int temp = map[btnsPos[2], btnsPos[3]];
+                map[btnsPos[2], btnsPos[3]] = map[btnsPos[0], btnsPos[1]];
+                map[btnsPos[0], btnsPos[1]] = temp;
                 pressedButton.Image = prevButton.Image;
                 prevButton.Image = null;
                 pressedButton.Text = prevButton.Text;
@@ -211,14 +205,7 @@ namespace Client
                         isContinue = true;
                         DeleteEaten(pressedButton, prevButton);
                     }
-                    int temp = map[pressedButton.Location.Y / cellSize, pressedButton.Location.X / cellSize];
-                    map[pressedButton.Location.Y / cellSize, pressedButton.Location.X / cellSize] = map[prevButton.Location.Y / cellSize, prevButton.Location.X / cellSize];
-                    map[prevButton.Location.Y / cellSize, prevButton.Location.X / cellSize] = temp;
-                    pressedButton.Image = prevButton.Image;
-                    prevButton.Image = null;
-                    pressedButton.Text = prevButton.Text;
-                    prevButton.Text = "";
-                    SendMove();     // Send after every move
+                    SendMove();
                     SwitchButtonToCheat(pressedButton);
                     countEatSteps = 0;
                     isMoving = false;
@@ -649,12 +636,7 @@ namespace Client
                     if (size <= 0) break;
                     byte[] buffor = new byte[size];
                     socket.Receive(buffor);
-                    int[] tmp = new int[4];
-                    tmp[0] = (int)buffor[0];
-                    tmp[1] = (int)buffor[1];
-                    tmp[2] = (int)buffor[2];
-                    tmp[3] = (int)buffor[3];
-                    UpdateMap(tmp);
+                    UpdateMap(buffor);
 
                 }
             }
@@ -667,7 +649,7 @@ namespace Client
             // send prevButton and pressedButton positions
             // send opponent buttons if deleted
 
-            byte[] buffor = new byte[4 * sizeof(int)];
+            byte[] buffor = new byte[4];
             buffor[0] = (byte)(prevButton.Location.Y / cellSize);
             buffor[1] = (byte)(prevButton.Location.X / cellSize);
             buffor[2] = (byte)(pressedButton.Location.Y / cellSize);
@@ -677,14 +659,8 @@ namespace Client
 
         private void BtnConnect_Click(object sender, EventArgs e)
         {
-            if (IsConnected)
-            {
-                IsConnected = false;
-            }
-            else
-            {
-                new Thread(ClientThread).Start();
-            }
+            if (IsConnected) IsConnected = false;
+            else new Thread(ClientThread).Start();
         }
     }
 }
