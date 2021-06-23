@@ -70,6 +70,7 @@ namespace Server
             string who = socket.RemoteEndPoint.ToString();
             lock (clients) clients.Add(socket);
             LogAdd("Client connected " + who);
+            socket.Send(new byte[] { (byte)(clients.Count % 2) });
             while (IsConnected)
             {
                 if (socket.Poll(50000, SelectMode.SelectRead))
