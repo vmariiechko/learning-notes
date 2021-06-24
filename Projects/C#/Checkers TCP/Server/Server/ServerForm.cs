@@ -17,9 +17,10 @@ namespace Server
     {
         private delegate void LogAddProc(string message);
         private UInt16 port = 4201;
+        private byte newClientId = 1;
         private bool IsConnected;
         private TcpListener server;
-        private List<Socket> clients = new List<Socket>();
+        private Dictionary<byte, Socket> clients = new Dictionary<byte, Socket>();
         public ServerForm()
         {
             InitializeComponent();
@@ -45,10 +46,7 @@ namespace Server
             IsConnected = true;
             while (IsConnected)
             {
-                if (server.Pending())
-                {
-                    new Thread(ServerClientThread).Start();
-                }
+                if (server.Pending()) new Thread(ServerClientThread).Start();
             }
             IsConnected = false;
             LogAdd("Server disconnected");
@@ -68,9 +66,10 @@ namespace Server
             }
 
             string who = socket.RemoteEndPoint.ToString();
-            lock (clients) clients.Add(socket);
+            byte currentClientId = newClientId++;
+            byte clientSide = (byte)(currentClientId % 2);
             LogAdd("Client connected " + who);
-            socket.Send(new byte[] { (byte)(clients.Count % 2) });
+            socket.Send(new byte[] { clientSide });
             while (IsConnected)
             {
                 if (socket.Poll(50000, SelectMode.SelectRead))
@@ -79,24 +78,23 @@ namespace Server
                     if (size <= 0) break;
                     byte[] buffor = new byte[size];
                     socket.Receive(buffor);
-                    lock (clients) foreach (Socket client in clients) client.Send(buffor);
+                    lock (clients)
+                    {
+                        clients[currentClientId].Send(buffor);
+                        if (clientSide == 0) clients[(byte)(currentClientId - 1)].Send(buffor);
+                        else clients[(byte)(currentClientId + 1)].Send(buffor);
+                    }
+                    LogAdd("Client" + who + " disconnected");
+                    lock (clients) clients.Remove(currentClientId);
+                    socket.Disconnect(false);
                 }
             }
-            LogAdd("Client" + who + " disconnected");
-            lock (clients) clients.Remove(socket);
-            socket.Disconnect(false);
         }
 
         private void btnConnect_Click(object sender, EventArgs e)
         {
-            if (IsConnected)
-            {
-                IsConnected = false;
-            }
-            else
-            {
-                new Thread(ServerThread).Start();
-            }
+            if (IsConnected) IsConnected = false;
+            else new Thread(ServerThread).Start();
         }
     }
 }
