@@ -16,16 +16,18 @@ namespace Client
     {
 
         private delegate void UpdateMapProc(byte[] tmp);
+        private delegate void UpdateStatusProc(string message);
+        private delegate void AdjustControlsProc();
 
         private UInt16 Port = 4201;
-        private bool IsConnected;
+        private bool IsConnected = false;
         private TcpClient client;
 
         const int mapSize = 8;
         const int cellSize = 50;
 
         int currentPlayer;
-        int playerSide;
+        int playerColor;
 
         List<Button> simpleSteps = new List<Button>();
 
@@ -45,8 +47,10 @@ namespace Client
         public Board()
         {
             InitializeComponent();
-            whiteFigure = new Bitmap(new Bitmap(@"C:\Users\vadim\Desktop\white.png"), new Size(cellSize - 10, cellSize - 10));
-            blackFigure = new Bitmap(new Bitmap(@"C:\Users\vadim\Desktop\black.png"), new Size(cellSize - 10, cellSize - 10));
+            //whiteFigure = new Bitmap(new Bitmap(@"C:\Users\vadim\Desktop\white.png"), new Size(cellSize - 10, cellSize - 10));
+            //blackFigure = new Bitmap(new Bitmap(@"C:\Users\vadim\Desktop\black.png"), new Size(cellSize - 10, cellSize - 10));
+            whiteFigure = new Bitmap(new Bitmap(@"..\..\Sprites\white.png"), new Size(cellSize - 10, cellSize - 10));
+            blackFigure = new Bitmap(new Bitmap(@"..\..\Sprites\black.png"), new Size(cellSize - 10, cellSize - 10));
             Init();
         }
 
@@ -85,10 +89,15 @@ namespace Client
             }
             if (!player1 || !player2)
             {
-                this.Controls.Clear();
-                InitializeComponent();
-                Init();
+                ReloadBoard();
             }
+        }
+
+        public void ReloadBoard()
+        {
+            this.Controls.Clear();
+            InitializeComponent();
+            Init();
         }
 
         public void CreateMap()
@@ -113,9 +122,20 @@ namespace Client
                     this.Controls.Add(button);
                 }
             }
-            txtHost.Location = new Point(15 + mapSize * cellSize, mapSize);
-            txtPort.Location = new Point(15 + mapSize * cellSize, mapSize + cellSize);
-            btnConnect.Location = new Point(15 + mapSize * cellSize, mapSize + 2 * cellSize);
+            RelocateForm();
+        }
+
+        public void RelocateForm()
+        {
+            int x = 15 + mapSize * cellSize;
+            lbHost.Location = new Point(x, mapSize);
+            txtHost.Location = new Point(x, mapSize + cellSize / 3);
+            lbPort.Location = new Point(x, mapSize + cellSize - 10);
+            txtPort.Location = new Point(x, mapSize + cellSize + 5);
+            btnConnect.Location = new Point(x, mapSize + 2 * cellSize);
+            lbColor.Location = new Point(x, mapSize + 3 * cellSize);
+            lbStatus.Location = new Point(x, mapSize + 4 * cellSize);
+            txtStatus.Location = new Point(x, mapSize + 4 * cellSize + 15);
         }
 
 
@@ -124,13 +144,15 @@ namespace Client
             if (InvokeRequired) Invoke(new UpdateMapProc(UpdateMap), btnsPos);
             else
             {
-                if (btnsPos[4] == 1)
+                if (currentPlayer == playerColor)
                 {
                     SwitchPlayer();
-                    if (currentPlayer == playerSide)
+                    if (currentPlayer == playerColor)
                     {
+                        UpdateStatus("Your turn to move");
                         ShowPossibleSteps();
                     }
+                    else UpdateStatus("Waiting for opponent move...");
                 }
                 else
                 {
@@ -149,6 +171,39 @@ namespace Client
                     }
                     SwitchButtonToCheat(pressedButton);
                     prevButton = pressedButton;
+                }
+            }
+        }
+
+        private void UpdateStatus(string message)
+        {
+            if (InvokeRequired) Invoke(new UpdateStatusProc(UpdateStatus), message);
+            else txtStatus.Text = message;
+        }
+
+        private void UpdateColor(string message)
+        {
+            if (InvokeRequired) Invoke(new UpdateStatusProc(UpdateColor), message);
+            else lbColor.Text = message;
+        }
+
+        private void AdjustControls()
+        {
+            if (InvokeRequired) Invoke(new AdjustControlsProc(AdjustControls));
+            else
+            {
+                if (IsConnected)
+                {
+                    txtHost.Enabled = false;
+                    txtPort.Enabled = false;
+                    btnConnect.Text = "Disconnect";
+                }
+                else
+                {
+                    txtHost.Enabled = true;
+                    txtPort.Enabled = true;
+                    btnConnect.Text = "Connect";
+                    lbColor.Text = "";
                 }
             }
         }
@@ -186,7 +241,7 @@ namespace Client
 
             pressedButton = sender as Button;
 
-            if (map[pressedButton.Location.Y / cellSize, pressedButton.Location.X / cellSize] != 0 && map[pressedButton.Location.Y / cellSize, pressedButton.Location.X / cellSize] == currentPlayer && currentPlayer == playerSide)
+            if (map[pressedButton.Location.Y / cellSize, pressedButton.Location.X / cellSize] != 0 && map[pressedButton.Location.Y / cellSize, pressedButton.Location.X / cellSize] == currentPlayer && currentPlayer == playerColor)
             {
                 CloseSteps();
                 pressedButton.BackColor = Color.Red;
@@ -635,11 +690,13 @@ namespace Client
             }
             catch (SocketException)
             {
-                //LogAdd("Server if offline");
+                UpdateStatus("Server is offline");
                 return;
             }
             Socket socket = client.Client;
+            UpdateStatus("Connected");
             IsConnected = true;
+            AdjustControls();
             while (IsConnected)
             {
                 if (socket.Poll(50000, SelectMode.SelectRead))
@@ -650,22 +707,25 @@ namespace Client
                     socket.Receive(buffor);
                     if (first)
                     {
-                        playerSide = buffor[0] + 1;
+                        playerColor = buffor[0] + 1;
+                        string color = playerColor == 1 ? "white" : "black";
+                        UpdateColor($"You are playing for {color}");
+                        if (currentPlayer == playerColor) UpdateStatus("Your turn to move");
+                        else UpdateStatus("Waiting for opponent move...");
                         first = false;
                     }
                     else UpdateMap(buffor);
                 }
             }
+            AdjustControls();
+            UpdateStatus("Disconnected");
             socket.Disconnect(true);
         }
 
         public void SendMove(bool switchPlayer = false)
         {
             byte[] buffor = new byte[5];
-            if (switchPlayer)
-            {
-                buffor[4] = 1;
-            }
+            if (switchPlayer) buffor[4] = 1;
             else
             {
                 buffor[0] = (byte)(prevButton.Location.Y / cellSize);
@@ -679,15 +739,20 @@ namespace Client
             }
             catch (SocketException)
             {
-                // client disconnected
+                UpdateStatus("You have been disconnected");
                 return;
             }
         }
 
         private void BtnConnect_Click(object sender, EventArgs e)
         {
-            if (IsConnected) IsConnected = false;
+            if (IsConnected)
+            {
+                ReloadBoard();
+                IsConnected = false;
+            }
             else new Thread(ClientThread).Start();
+            AdjustControls();
         }
     }
 }
