@@ -72,6 +72,7 @@ namespace Client
                 { 2,0,2,0,2,0,2,0 }
             };
             CreateMap();
+            AdjustControls();
         }
 
         public void ResetGame()
@@ -248,7 +249,7 @@ namespace Client
                 DeactivateAllButtons();
                 pressedButton.Enabled = true;
                 countEatSteps = 0;
-                if (pressedButton.Text == "D")
+                if (pressedButton.Text == "K")
                     ShowSteps(pressedButton.Location.Y / cellSize, pressedButton.Location.X / cellSize, false);
                 else ShowSteps(pressedButton.Location.Y / cellSize, pressedButton.Location.X / cellSize);
 
@@ -277,7 +278,7 @@ namespace Client
                     isMoving = false;
                     CloseSteps();
                     DeactivateAllButtons();
-                    if (pressedButton.Text == "D")
+                    if (pressedButton.Text == "K")
                         ShowSteps(pressedButton.Location.Y / cellSize, pressedButton.Location.X / cellSize, false);
                     else ShowSteps(pressedButton.Location.Y / cellSize, pressedButton.Location.X / cellSize);
                     if (countEatSteps == 0 || !isContinue)
@@ -310,7 +311,7 @@ namespace Client
                 {
                     if (map[i, j] == currentPlayer)
                     {
-                        if (buttons[i, j].Text == "D") isOneStep = false;
+                        if (buttons[i, j].Text == "K") isOneStep = false;
                         else isOneStep = true;
                         if (IsButtonHasEatStep(i, j, isOneStep, new int[2] { 0, 0 }))
                         {
@@ -327,12 +328,12 @@ namespace Client
         {
             if (map[button.Location.Y / cellSize, button.Location.X / cellSize] == 1 && button.Location.Y / cellSize == mapSize - 1)
             {
-                button.Text = "D";
+                button.Text = "K";
 
             }
             if (map[button.Location.Y / cellSize, button.Location.X / cellSize] == 2 && button.Location.Y / cellSize == 0)
             {
-                button.Text = "D";
+                button.Text = "K";
             }
         }
 
@@ -450,7 +451,7 @@ namespace Client
 
                 if (map[ti, tj] != currentPlayer)
                 {
-                    if (pressedButton.Text == "D")
+                    if (pressedButton.Text == "K")
                         ShowProceduralEat(ti, tj, false);
                     else ShowProceduralEat(ti, tj);
                 }

@@ -16,6 +16,7 @@ namespace Server
     public partial class ServerForm : Form
     {
         private delegate void LogAddProc(string message);
+        private delegate void AdjustControlsProc();
         private UInt16 port = 4201;
         private byte newClientId = 1;
         private bool IsConnected;
@@ -33,6 +34,24 @@ namespace Server
             else txtLog.AppendText(message + Environment.NewLine);
         }
 
+        private void AdjustControls()
+        {
+            if (InvokeRequired) Invoke(new AdjustControlsProc(AdjustControls));
+            else
+            {
+                if (IsConnected)
+                {
+                    txtPort.Enabled = false;
+                    btnConnect.Text = "Disconnect";
+                }
+                else
+                {
+                    txtPort.Enabled = true;
+                    btnConnect.Text = "Connect";
+                }
+            }
+        }
+
         private void txtPort_TextChanged(object sender, EventArgs e)
         {
             btnConnect.Enabled = UInt16.TryParse(txtPort.Text, out port);
@@ -44,11 +63,13 @@ namespace Server
             server.Start();
             LogAdd("Server connected");
             IsConnected = true;
+            AdjustControls();
             while (IsConnected)
             {
                 if (server.Pending()) new Thread(ServerClientThread).Start();
             }
             IsConnected = false;
+            AdjustControls();
             LogAdd("Server disconnected");
             server.Stop();
         }
@@ -95,6 +116,7 @@ namespace Server
         {
             if (IsConnected) IsConnected = false;
             else new Thread(ServerThread).Start();
+            AdjustControls();
         }
     }
 }
