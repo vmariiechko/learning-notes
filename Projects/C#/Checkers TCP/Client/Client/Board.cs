@@ -14,7 +14,6 @@ namespace Client
 {
     public partial class Board : Form
     {
-
         private delegate void UpdateMapProc(byte[] tmp);
         private delegate void UpdateStatusProc(string message);
         private delegate void AdjustControlsProc();
@@ -39,6 +38,7 @@ namespace Client
         bool isMoving;
 
         int[,] map = new int[mapSize, mapSize];
+
         Button[,] buttons = new Button[mapSize, mapSize];
 
         Image whiteFigure;
@@ -79,7 +79,6 @@ namespace Client
         {
             bool player1 = false;
             bool player2 = false;
-
             for (int i = 0; i < mapSize; i++)
             {
                 for (int j = 0; j < mapSize; j++)
@@ -103,14 +102,12 @@ namespace Client
 
         public void CreateMap()
         {
-
             this.Width = (mapSize + 1) * cellSize + txtHost.Width;
             this.Height = (mapSize + 1) * cellSize;
             for (int r = 0; r < mapSize; r++)
             {
                 for (int c = 0; c < mapSize; c++)
                 {
-
                     Button button = new Button();
                     button.Location = new Point(c * cellSize, r * cellSize);
                     button.Size = new Size(cellSize, cellSize);
@@ -118,7 +115,8 @@ namespace Client
                     if (map[r, c] == 1) button.Image = whiteFigure;
                     else if (map[r, c] == 2) button.Image = blackFigure;
                     button.BackColor = GetPrevButtonColor(button);
-                    button.ForeColor = Color.Red;
+                    button.ForeColor = Color.White;
+                    button.Font = new Font("Microsoft Sans Serif", 12F, FontStyle.Regular, GraphicsUnit.Point, ((byte)(204)));
                     buttons[r, c] = button;
                     this.Controls.Add(button);
                 }
@@ -139,13 +137,12 @@ namespace Client
             txtStatus.Location = new Point(x, mapSize + 4 * cellSize + 15);
         }
 
-
         public void UpdateMap(byte[] btnsPos)
         {
             if (InvokeRequired) Invoke(new UpdateMapProc(UpdateMap), btnsPos);
             else
             {
-                if (currentPlayer == playerColor)
+                if (btnsPos[4] == 1)
                 {
                     SwitchPlayer();
                     if (currentPlayer == playerColor)
@@ -236,7 +233,6 @@ namespace Client
 
         public void OnFigurePress(object sender, EventArgs e)
         {
-
             if (prevButton != null)
                 prevButton.BackColor = GetPrevButtonColor(prevButton);
 
@@ -296,7 +292,6 @@ namespace Client
                     }
                 }
             }
-
             prevButton = pressedButton;
         }
 
@@ -329,7 +324,6 @@ namespace Client
             if (map[button.Location.Y / cellSize, button.Location.X / cellSize] == 1 && button.Location.Y / cellSize == mapSize - 1)
             {
                 button.Text = "K";
-
             }
             if (map[button.Location.Y / cellSize, button.Location.X / cellSize] == 2 && button.Location.Y / cellSize == 0)
             {
@@ -684,7 +678,6 @@ namespace Client
 
         private void ClientThread()
         {
-            bool first = true;
             try
             {
                 client = new TcpClient(txtHost.Text.Trim(), Port);
@@ -695,6 +688,7 @@ namespace Client
                 return;
             }
             Socket socket = client.Client;
+            bool first = true;
             UpdateStatus("Connected");
             IsConnected = true;
             AdjustControls();
@@ -755,5 +749,6 @@ namespace Client
             else new Thread(ClientThread).Start();
             AdjustControls();
         }
+
     }
 }

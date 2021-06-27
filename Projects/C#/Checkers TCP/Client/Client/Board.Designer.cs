@@ -61,6 +61,7 @@ namespace Client
             this.btnConnect.Name = "btnConnect";
             this.btnConnect.Size = new System.Drawing.Size(132, 23);
             this.btnConnect.TabIndex = 2;
+            this.btnConnect.TabStop = false;
             this.btnConnect.Text = "Connect";
             this.btnConnect.UseVisualStyleBackColor = true;
             this.btnConnect.Click += new System.EventHandler(this.BtnConnect_Click);
@@ -100,6 +101,7 @@ namespace Client
             this.txtStatus.ReadOnly = true;
             this.txtStatus.Size = new System.Drawing.Size(132, 50);
             this.txtStatus.TabIndex = 6;
+            this.txtStatus.TabStop = false;
             this.txtStatus.Text = "Connect to the server";
             //
             // lbColor

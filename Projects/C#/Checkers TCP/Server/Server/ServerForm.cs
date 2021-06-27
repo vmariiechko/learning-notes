@@ -89,6 +89,7 @@ namespace Server
             string who = socket.RemoteEndPoint.ToString();
             byte currentClientId = newClientId++;
             byte clientSide = (byte)(currentClientId % 2);
+            lock (clients) clients.Add(currentClientId, socket);
             LogAdd("Client connected " + who);
             socket.Send(new byte[] { clientSide });
             while (IsConnected)
@@ -105,11 +106,11 @@ namespace Server
                         if (clientSide == 0) clients[(byte)(currentClientId - 1)].Send(buffor);
                         else clients[(byte)(currentClientId + 1)].Send(buffor);
                     }
-                    LogAdd("Client" + who + " disconnected");
-                    lock (clients) clients.Remove(currentClientId);
-                    socket.Disconnect(false);
                 }
             }
+            LogAdd("Client" + who + " disconnected");
+            lock (clients) clients.Remove(currentClientId);
+            socket.Disconnect(false);
         }
 
         private void btnConnect_Click(object sender, EventArgs e)
