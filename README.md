@@ -9,6 +9,7 @@
 
 - [Checkers online (TCP, C#)](https://github.com/vmariiechko/learning-notes/tree/main/Projects/C%23/Checkers%20TCP)
 - [Photo organizer (Threads, Java)](https://github.com/vmariiechko/learning-notes/tree/main/Projects/Java/Organizing%20Photos)
+- [AES (Python, SageMath)](https://github.com/vmariiechko/learning-notes/tree/main/Projects/SageMath/AES)
 
 ---
 
